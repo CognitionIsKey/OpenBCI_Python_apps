@@ -30,11 +30,11 @@ class Imp_Check(tk.Frame):
         self.__channel4 = 0
         self.__channel5 = 0
 
-        self.label1.configure(text="Channel 1: %s kOhm" % self.__channel1)
-        self.label2.configure(text="Channel 2: %s kOhm" % self.__channel2)
-        self.label3.configure(text="Channel 3: %s kOhm" % self.__channel3)
-        self.label4.configure(text="Channel 4: %s kOhm" % self.__channel4)
-        self.label5.configure(text="Reference: %s kOhm" % self.__channel5)
+        self.label1.configure(text="Channel 1: %0.2f kOhm" % self.__channel1)
+        self.label2.configure(text="Channel 2: %0.2f kOhm" % self.__channel2)
+        self.label3.configure(text="Channel 3: %0.2f kOhm" % self.__channel3)
+        self.label4.configure(text="Channel 4: %0.2f kOhm" % self.__channel4)
+        self.label5.configure(text="Reference: %0.2f kOhm" % self.__channel5)
 
         self.streaming = mp.Event()
         self.terminate = mp.Event()
@@ -45,22 +45,23 @@ class Imp_Check(tk.Frame):
         self.queue2 = mp.Queue()
         self.queue3 = mp.Queue()
         self.queue4 = mp.Queue()
+        self.queue5 = mp.Queue()
 
         self.prcs.start()
         root.update()
-    def acquire(self,state): # single time activation
+    def acquire(self): # single time activation
         def handle_sample(sample): # sampling function / single process
             ''' __.imp_data for 5 elements array with impedance values / __.channel_data for channel data. '''
-            self.channel1 = sample.channel_data[0]
-            self.channel2 = sample.channel_data[1]
-            self.channel3 = sample.channel_data[2]
-            self.channel4 = sample.channel_data[3]
-            #self.channel5 = sample.channel_data[4]   #      turned off for channel data
+            self.channel1 = sample.imp_data[0]
+            self.channel2 = sample.imp_data[1]
+            self.channel3 = sample.imp_data[2]
+            self.channel4 = sample.imp_data[3]
+            self.channel5 = sample.imp_data[4]   #      turned off for channel data
             self.queue.put(self.channel1)
             self.queue2.put(self.channel2)
             self.queue3.put(self.channel3)
             self.queue4.put(self.channel4)
-            #self.queue5.put(self.channel5)
+            self.queue5.put(self.channel5)
 
             if self.board.streaming:
                 self.streaming.set()
@@ -85,13 +86,13 @@ class Imp_Check(tk.Frame):
             self.__channel2 =  self.queue2.get()
             self.__channel3 =  self.queue3.get()
             self.__channel4 =  self.queue4.get()
-        #   self.__channel5 =  self.queue5.get()            ## turned off for channel data
+            self.__channel5 =  self.queue5.get()            ## turned off for channel data
 
         self.label1.configure(text="Channel 1:  %0.2f  kOhm" % self.__channel1)
         self.label2.configure(text="Channel 2:  %0.2f  kOhm" % self.__channel2)
         self.label3.configure(text="Channel 3:  %0.2f  kOhm" % self.__channel3)
         self.label4.configure(text="Channel 4:  %0.2f  kOhm" % self.__channel4)
-        #self.label5.configure(text="Reference: %s kOhm" % self.__channel5)
+        self.label5.configure(text="Reference:  %0.2f  kOhm" % self.__channel5)
 
     def start(self):
         self.update()
