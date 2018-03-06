@@ -41,6 +41,7 @@ class Imp_Check(tk.Frame):
         self.terminate = mp.Event()
 
         self.prcs = mp.Process(target=self.acquire)
+        self.prcs.daemon = True
 
         self.queue = mp.Queue()
         self.queue2 = mp.Queue()
@@ -80,6 +81,8 @@ class Imp_Check(tk.Frame):
 
         self.board = bci.OpenBCIBoard(impedance=True, port="d2:b4:11:81:48:ad",
                                       timeout=5)
+        if not self.board.impedance:
+            self.board.setImpedance(True)
         self.board.start_streaming(handle_sample)
 
         self.board.disconnect()
@@ -104,6 +107,7 @@ class Imp_Check(tk.Frame):
         self.update()
         if not self.prcs.is_alive():
             self.prcs = mp.Process(target=self.acquire)
+            self.prcs.daemon = True
             self.prcs.start()
         root.update()
 
