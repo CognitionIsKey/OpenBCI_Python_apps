@@ -7,22 +7,22 @@ class Imp_Check(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         self.button = tk.Button(self, text='Start',
-                                command=self.start).pack(side='right')
+                                command=self.start).pack(side='bottom', fill="x")
         self.button = tk.Button(self, text='Stop',
-                                command=self.stop).pack(side='right')
+                                command=self.stop).pack(side='bottom', fill="x")
 
         # In miliseconds ##FIXME: for bigger values (100+) application freezes
         self.UPDATE_RATE = 2
 
-        self.label1 = tk.Label(self, width=80)
+        self.label1 = tk.Label(self, width=40)
         self.label1.pack(side="top", fill="x")
-        self.label2 = tk.Label(self, width=80)
+        self.label2 = tk.Label(self, width=40)
         self.label2.pack(side="top", fill="x")
-        self.label3 = tk.Label(self, width=80)
+        self.label3 = tk.Label(self, width=40)
         self.label3.pack(side="top", fill="x")
-        self.label4 = tk.Label(self, width=80)
+        self.label4 = tk.Label(self, width=40)
         self.label4.pack(side="top", fill="x")
-        self.label5 = tk.Label(self, width=80)
+        self.label5 = tk.Label(self, width=40)
         self.label5.pack(side="top", fill="x")
 
         self.__channel1 = 0
@@ -30,6 +30,12 @@ class Imp_Check(tk.Frame):
         self.__channel3 = 0
         self.__channel4 = 0
         self.__channel5 = 0
+
+        self.color1 = 'grey70'
+        self.color2 = 'grey70'
+        self.color3 = 'grey70'
+        self.color4 = 'grey70'
+        self.color5 = 'grey70'
 
         self.label1.configure(text="Channel 1: %0.2f kOhm" % self.__channel1)
         self.label2.configure(text="Channel 2: %0.2f kOhm" % self.__channel2)
@@ -65,6 +71,7 @@ class Imp_Check(tk.Frame):
             self.channel4 = sample.imp_data[3]
             # Turned off for channel data
             self.channel5 = sample.imp_data[4]
+
             self.queue.put(self.channel1)
             self.queue2.put(self.channel2)
             self.queue3.put(self.channel3)
@@ -97,11 +104,31 @@ class Imp_Check(tk.Frame):
             # Turned off for channel data
             self.__channel5 = self.queue5.get()
 
-        self.label1.configure(text="Channel 1:  %0.2f  kOhm" % self.__channel1)
-        self.label2.configure(text="Channel 2:  %0.2f  kOhm" % self.__channel2)
-        self.label3.configure(text="Channel 3:  %0.2f  kOhm" % self.__channel3)
-        self.label4.configure(text="Channel 4:  %0.2f  kOhm" % self.__channel4)
-        self.label5.configure(text="Reference:  %0.2f  kOhm" % self.__channel5)
+        __list_channels = [self.__channel1, self.__channel2,
+                           self.__channel3, self.__channel4,
+                           self.__channel5]
+
+        __color = [self.color1, self.color2,
+                   self.color3, self.color4, self.color5]
+
+        for index, channel in enumerate(__list_channels):
+            if channel > 14:
+                __color[index] = 'red'
+            elif channel > 8:
+                __color[index] = 'yellow'
+            else:
+                __color[index] = 'green'
+
+        self.label1.configure(text="Channel 1:  %0.2f  kOhm" %
+                              self.__channel1, bg=__color[0])
+        self.label2.configure(text="Channel 2:  %0.2f  kOhm" %
+                              self.__channel2, bg=__color[1])
+        self.label3.configure(text="Channel 3:  %0.2f  kOhm" %
+                              self.__channel3, bg=__color[2])
+        self.label4.configure(text="Channel 4:  %0.2f  kOhm" %
+                              self.__channel4, bg=__color[3])
+        self.label5.configure(text="Reference:  %0.2f  kOhm" %
+                              self.__channel5, bg=__color[4])
 
     def start(self):
         self.update()
@@ -109,7 +136,7 @@ class Imp_Check(tk.Frame):
             self.prcs = mp.Process(target=self.acquire)
             self.prcs.daemon = True
             self.prcs.start()
-        root.update()
+            root.update()
 
     def stop(self):
         self.terminate.set()
@@ -118,10 +145,11 @@ class Imp_Check(tk.Frame):
             self.prcs.terminate()
             self.streaming = mp.Event()
             self.terminate = mp.Event()
-        root.update()
+            root.update()
 
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.wm_title("Impedance")
     Imp_Check(root).pack(fill="both", expand=True)
     root.mainloop()
