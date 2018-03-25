@@ -115,11 +115,11 @@ class CrossCorrelation(object):
         if len(self.signal) <= 1:
             pass
         else:
-            self.correlate()
+            self.correlate(self.signal)
 
-    def correlate(self):
+    def correlate(self, signal):
         for i in range(len(self.__channels)):
-            sample = np.array([self.signal[:, i]]).T
+            sample = np.array([signal[:, i]]).T
 
             cca1 = CCA(n_components=1)
             cca2 = CCA(n_components=1)
@@ -141,10 +141,10 @@ class CrossCorrelation(object):
 
     @property
     def print_channels(self):
-        print("1.", self.__channels[0])
-        print("2.", self.__channels[1])
-        print("3.", self.__channels[2])
-        print("4.", self.__channels[3])
+        print("Channel 1.", self.__channels[0])
+        print("Channel 2.", self.__channels[1])
+        print("Channel 3.", self.__channels[2])
+        print("Channel 4.", self.__channels[3])
 
     @property
     def channels(self):
