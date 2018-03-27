@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
-sys.path.insert(0, "/home/.../OpenBCI_Python/")
+sys.path.insert(0, "/home/oskar/kopia github/OpenBCI_Python")
 import numpy as np
 import multiprocessing as mp
 import open_bci_ganglion as bci
 from sklearn.cross_decomposition import CCA
+
 
 '''EXAMPLE
 test = cca_live()
@@ -22,8 +23,7 @@ class cca_live(object):
     def __init__(self, sampling_rate=200):
         self.sampling_rate = sampling_rate
         self.ref_signals = []
-        self.sig_samples = []
-        self.corr_values = []
+        self.corr_values = np.zeros(shape=(120, 12), dtype=object)
         self.__fs = 1./sampling_rate
         self.__t = np.arange(0.0, 1.0, self.__fs)
         self.queue = mp.Queue()
@@ -35,39 +35,32 @@ class cca_live(object):
 
     def add_stimuli(self, hz):
         '''Add stimuli to generate artificial signal'''
-        # TODO: Support for more than 1 stimuli.
-
         self.hz = hz
         self.ref_signals.append(SignalReference(self.hz, self.__t))
-        self.push_sample()
 
     def print_results(self):
         ''' Prints results in terminal '''
         i = 0  # increment for each sample
         while True:
-            self.sig_samples.append(self.queue.get())
-            self.push_sample()
-            print(chr(27) + "[2J")
-            self.corr_values[i].print_channels
+            self.push_sample(self.queue.get())
+            self.corr_values[:][i]
             print("Korelacje dla kanałów.")
             i += 1
 
     def split(self):
-        self.__matrix = np.zeros(shape=(200, 4))
-        self.increment = -1
+        self.increment = 0
+        self.__pre_buffer = []
 
         def handle_sample(sample):
             ''' Save samples into table; single process '''
-            self.__matrix[self.increment][0] = sample.channel_data[0]
-            self.__matrix[self.increment][1] = sample.channel_data[1]
-            self.__matrix[self.increment][2] = sample.channel_data[2]
-            self.__matrix[self.increment][3] = sample.channel_data[3]
+            __sample_chunk = [sample.channel_data[0],
+                              sample.channel_data[1],
+                              sample.channel_data[2],
+                              sample.channel_data[3]]
+            self.__pre_buffer.append(__sample_chunk)
 
-            # Data parser #
-            if self.increment == self.sampling_rate - 1:
-                self.queue.put(self.__matrix)
-                self.__matrix = np.zeros(shape=(200, 4))
-                self.increment = -1
+            if len(self.__pre_buffer) == self.sampling_rate + 1:
+                del self.__pre_buffer[:1]
 
             # Event listener #
             if self.board.streaming:
@@ -78,22 +71,34 @@ class cca_live(object):
                 self.board.stop()
 
             self.increment += 1
+
+            # Push #
+            if self.increment % 200 == 0:
+                self.queue.put(self.__pre_buffer)
+                self.increment = 0
+
         # Board connection #
         self.board = bci.OpenBCIBoard(port="d2:b4:11:81:48:ad")
         self.board.start_streaming(handle_sample)
 
-    def push_sample(self):
+    def push_sample(self, queue):
         ''' Push single sample into the list '''
-        # FIXME: Iteration over ref_signals don't work.
+        single_packet = queue
         for i in range(len(self.ref_signals)):
-            self.corr_values.append((CrossCorrelation(self.sig_samples[-1:],
-                                                      self.ref_signals[i],
-                                                      i, self.__t)))
+            self.corr_values[CrossCorrelation.number][i] = CrossCorrelation(
+                                                           single_packet,
+                                                           self.ref_signals[i],
+                                                           self.__t)
 
 
 class SignalReference(object):
     ''' Reference signal generator'''
+    ref_number = 0
+
     def __init__(self, hz, t):
+        self.id = self.ref_number
+        SignalReference.ref_number += 1
+
         self.hz = hz
 
         self.sin = np.array([np.sin(2*np.pi*i*self.hz) for i in t])
@@ -106,16 +111,20 @@ class SignalReference(object):
 
 class CrossCorrelation(object):
     ''' CCA class; returns correlation value for each channel '''
-    def __init__(self, signal_sample, ref_signals, num, t):
+    number = -1  # compensate for array lenght
+
+    def __init__(self, signal_sample, ref_signals, t):
         self.signal = np.squeeze(np.array(signal_sample))
         self.reference = ref_signals
         self.__channels = [0, 0, 0, 0]
-
+        CrossCorrelation.number += 1
         # Check if table not empty #
         if len(self.signal) <= 1:
             pass
         else:
             self.correlate(self.signal)
+
+        return self.print_channels
 
     def correlate(self, signal):
         for i in range(len(self.__channels)):
@@ -141,6 +150,7 @@ class CrossCorrelation(object):
 
     @property
     def print_channels(self):
+        print("Reference signal: %s hz." % self.reference.hz)
         print("Channel 1.", self.__channels[0])
         print("Channel 2.", self.__channels[1])
         print("Channel 3.", self.__channels[2])
@@ -148,4 +158,4 @@ class CrossCorrelation(object):
 
     @property
     def channels(self):
-        return self.__channels
+        return self.__channels,  self.reference.id
