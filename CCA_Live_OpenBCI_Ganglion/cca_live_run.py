@@ -11,8 +11,9 @@ from sklearn.cross_decomposition import CCA
 '''EXAMPLE
 test = cca_live()
 
-#Curently works with just one stimuli.
-test.add_stimuli(hz)
+# up to 12 #
+test.add_stimuli(hz1)
+test.add_stimuli(hz2)
 
 test.print_results()
 '''
@@ -20,12 +21,17 @@ test.print_results()
 
 class cca_live(object):
     """Online data parser for 4 channels."""
-    def __init__(self, sampling_rate=200):
+    def __init__(self, sampling_rate=200, connect=True):
         self.sampling_rate = sampling_rate
+        self.connect = connect
         self.ref_signals = []
-        self.corr_values = np.zeros(shape=(120, 12), dtype=object)
+        self.corr_values = []
         self.__fs = 1./sampling_rate
         self.__t = np.arange(0.0, 1.0, self.__fs)
+        if connect:
+            self.init_start()
+
+    def init_start(self):
         self.queue = mp.Queue()
         self.streaming = mp.Event()
         self.terminate = mp.Event()
@@ -43,8 +49,15 @@ class cca_live(object):
         i = 0  # increment for each sample
         while True:
             self.push_sample(self.queue.get())
-            self.corr_values[:][i]
-            print("Korelacje dla kanałów.")
+            print(chr(27) + "[2J")
+            print("===========================")
+            print("Korelacje dla kanałów:")
+            print('Reference HZ : %s' % self.corr_values[i].reference[0].hz)
+            print('Channel 1 : %s' % self.corr_values[i].channels[0][0])
+            print('Channel 2 : %s' % self.corr_values[i].channels[0][1])
+            print('Channel 3 : %s' % self.corr_values[i].channels[0][2])
+            print('Channel 4 : %s' % self.corr_values[i].channels[0][3])
+            print("===========================")
             i += 1
 
     def split(self):
@@ -81,24 +94,16 @@ class cca_live(object):
         self.board = bci.OpenBCIBoard(port="d2:b4:11:81:48:ad")
         self.board.start_streaming(handle_sample)
 
-    def push_sample(self, queue):
+    def push_sample(self, packet):
         ''' Push single sample into the list '''
-        single_packet = queue
-        for i in range(len(self.ref_signals)):
-            self.corr_values[CrossCorrelation.number][i] = CrossCorrelation(
-                                                           single_packet,
-                                                           self.ref_signals[i],
-                                                           self.__t)
+        self.corr_values.append(CrossCorrelation(packet,
+                                                 self.ref_signals,
+                                                 self.__t))
 
 
 class SignalReference(object):
     ''' Reference signal generator'''
-    ref_number = 0
-
     def __init__(self, hz, t):
-        self.id = self.ref_number
-        SignalReference.ref_number += 1
-
         self.hz = hz
 
         self.sin = np.array([np.sin(2*np.pi*i*self.hz) for i in t])
@@ -111,51 +116,45 @@ class SignalReference(object):
 
 class CrossCorrelation(object):
     ''' CCA class; returns correlation value for each channel '''
-    number = -1  # compensate for array lenght
+    packet_id = 0  # compensate for array lenght
 
     def __init__(self, signal_sample, ref_signals, t):
+        self.id = CrossCorrelation.packet_id
         self.signal = np.squeeze(np.array(signal_sample))
         self.reference = ref_signals
-        self.__channels = [0, 0, 0, 0]
-        CrossCorrelation.number += 1
+        self.channels = np.zeros(shape=(len(self.reference), 4))
+        CrossCorrelation.packet_id += 1
         # Check if table not empty #
-        if len(self.signal) <= 1:
-            pass
-        else:
+        try:
             self.correlate(self.signal)
-
-        return self.print_channels
+        except:
+            print("Error, couldn't find signal to correlate!")
 
     def correlate(self, signal):
-        for i in range(len(self.__channels)):
-            sample = np.array([signal[:, i]]).T
+        for ref in range(len(self.reference)):
+            for i in range(4):
+                sample = np.array([signal[:, i]]).T
 
-            cca1 = CCA(n_components=1)
-            cca2 = CCA(n_components=1)
+                cca1 = CCA(n_components=1)
+                cca2 = CCA(n_components=1)
 
-            ref_sin = self.reference.sin
-            ref_cos = self.reference.cos
+                ref_sin = self.reference[ref].sin
+                ref_cos = self.reference[ref].cos
 
-            cca1.fit(sample, ref_sin)
-            cca2.fit(sample, ref_cos)
+                cca1.fit(sample, ref_sin)
+                cca2.fit(sample, ref_cos)
 
-            U, V = cca1.transform(sample, ref_sin)
-            U2, V2 = cca2.transform(sample, ref_cos)
+                U, V = cca1.transform(sample, ref_sin)
+                U2, V2 = cca2.transform(sample, ref_cos)
 
-            corr = np.corrcoef(U.T, V)[0, 1]
-            corr2 = np.corrcoef(U2.T, V2)[0, 1]
-            cor = np.round(max(corr, corr2), 4)
+                corr = np.corrcoef(U.T, V)[0, 1]
+                corr2 = np.corrcoef(U2.T, V2)[0, 1]
+                cor = np.round(max(corr, corr2), 4)
 
-            self.__channels[i] = abs(cor)
+                self.channels[ref][i] = abs(cor)
 
-    @property
-    def print_channels(self):
-        print("Reference signal: %s hz." % self.reference.hz)
-        print("Channel 1.", self.__channels[0])
-        print("Channel 2.", self.__channels[1])
-        print("Channel 3.", self.__channels[2])
-        print("Channel 4.", self.__channels[3])
 
-    @property
-    def channels(self):
-        return self.__channels,  self.reference.id
+if __name__ == "__main__":
+    test = cca_live()
+    test.add_stimuli(hz)
+    test.print_results()
