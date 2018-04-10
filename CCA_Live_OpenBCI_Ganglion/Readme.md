@@ -6,23 +6,19 @@ Online 4 channel data parser with CCA.
 
 Open for issues, pull requests and testing!
 
-**Current Version** cca_live.py 0.2 *Please use newer version*
+**Old versions** cca_live.py 0.2
 
-- Multi stimuli support!
+- cca_live.py 0.2
+- cca_live_work_v0.28.py
+- cca_live_run.py
 
-- Major rebuild in parser class
-- Correlation for every stimuli is easier to access.
-- Some minor fixing.
-- Some new bugs to fix.
+**Current Version**  cca_live_v0.32.py version 0.32 *unstable*
 
-**Current Version**  cca_live_v0.28.py version 0.28 *unstable/WIP*
-
-- Support to harmonic signals.
-- Rebuild parsing functions.
+- Major rebuild and improvments of CCA functions.
+- State sharing between objects.
 - Fixing few minor bugs.
-- Now script prints all stimuli correlation, not just first.
-- Some minor fixing.
-- Some new bugs to fix.
+- Now also have in-build offline simulator. (no device needed)
+- Filtering (Buttersworth filter)
 
 **Other features**
 
@@ -37,5 +33,4 @@ Simple script generating openbci like samples from .csv file with eeg_signals.
 - Bug fixing.
 - Tests.
 - DOCS!
-- Easier packet managing.
-- Filters!
+- Fix multiprocessing issues.
