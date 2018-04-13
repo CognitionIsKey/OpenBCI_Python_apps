@@ -10,6 +10,7 @@ Open for issues, pull requests and testing!
 
 - cca_live.py 0.2
 - cca_live_work_v0.28.py
+- cca_live_work_v0.32.py
 - cca_live_run.py
 
 **Current Version**  cca_live_v0.34.py version 0.34 *unstable*
