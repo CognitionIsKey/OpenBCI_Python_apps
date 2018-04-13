@@ -29,10 +29,10 @@ Simple script generating openbci like samples from .csv file with eeg_signals.
 
 # TODO:
 
-- Rebuild CCA class for better resources acces.
+- :heavy_check_mark: Rebuild CCA class for better resources acces.
 - Build Decissision Class for BCI
 - Tests.
 - Bug fixing.
 - Tests.
 - DOCS!
-- Fix multiprocessing issues.
+- :heavy_check_mark: Fix multiprocessing issues.
