@@ -12,13 +12,14 @@ Open for issues, pull requests and testing!
 - cca_live_work_v0.28.py
 - cca_live_run.py
 
-**Current Version**  cca_live_v0.32.py version 0.32 *unstable*
+**Current Version**  cca_live_v0.34.py version 0.34 *unstable*
 
-- Major rebuild and improvments of CCA functions.
+- Rebuild processing class.
+- Fix zombie process issues.
+- Now working more stable.
 - State sharing between objects.
 - Fixing few minor bugs.
-- Now also have in-build offline simulator. (no device needed)
-- Filtering (Buttersworth filter)
+
 
 **Other features**
 
