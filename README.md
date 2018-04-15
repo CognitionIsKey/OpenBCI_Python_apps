@@ -21,7 +21,7 @@ For now, OpenBCI_Simulator is under development and future options like generati
 
 - *WIP*
 
-### Prerequisites
+### Prerequisites:
 
 To use these applications you will need:
 
@@ -33,9 +33,9 @@ scipy
 
 or simply install [Anaconda](anaconda.org/)
 
-### Installing
+### Installing:
 
-Install by terminal by:
+Install by:
 
 ```
 git clone https://github.com/CognitionIsKey/OpenBCI_Python_apps.git
