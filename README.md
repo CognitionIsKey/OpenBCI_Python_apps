@@ -15,9 +15,10 @@ For now, OpenBCI_Simulator is under development and future options like generati
 
 #### Impedance measurement for OpenBCI Ganglion
 
-Litte GUI to measure electrodes impedance on Ganglion device.
+- Litte GUI to measure electrodes impedance on Ganglion device.
 
-#### Canonical Correlation Analysis for OpenBCI Ganglion *WIP*
+#### Canonical Correlation Analysis for OpenBCI Ganglion
+- *WIP*
 
 
 
@@ -39,7 +40,7 @@ or simply install [Anaconda](anaconda.org/)
 Install by terminal by:
 
 ```
-https://github.com/CognitionIsKey/OpenBCI_Python_apps.git
+git clone https://github.com/CognitionIsKey/OpenBCI_Python_apps.git
 ```
 
 ### Author
