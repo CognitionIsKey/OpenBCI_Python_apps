@@ -1,38 +1,44 @@
-import numpy as np
 import pandas as pd
 import time
-
-
-
 ''' OpenBCI Ganglion Simulator '''
-''' EXAMPLE:
+
+''' EXAMPLE: '''
+'''
 def handle_sample(sample):
     print(sample.channel_data)
-'''
-'''
-board_sim = OpenBCISimulator("/home/.../.../SUBJ1/SSVEP_8Hz_Trial3_SUBJ1.csv", [list with max 4 channels])
 
+CHANNELS = [1,2,3,4]
+
+board_sim = OpenBCISimulator("/home/.../.../SUBJ1/SSVEP_8Hz_Trial3_SUBJ1.csv",
+CHANNELS)
 board_sim.start_streaming(handle_sample)
 '''
 
 
 class OpenBCISimulator(object):
-    def __init__(self, path, channels, sample_rate=256):
+    """OpenBCI Ganglion simulator class. Generate sample object from eeg file,
+    and pass it further by callback function.
+
+    Parameters
+    ----------
+    path : string
+        Path of your eeg data set. e.g "/home/SUBJ1/SSVEP_8Hz_Trial3_SUBJ1.csv"
+    channels : list
+        Selected channels for generator. Min. 1 Max. 4 channels.
+    sample_rate : integer
+        Sampling rate, default for Ganglion 250.
+    test : boolean
+        If true, all samples will be parse instantly, without simulating
+        sample rate time.
+    """
+
+    def __init__(self, path, channels, sample_rate=256, test=False):
         self.sample_rate = sample_rate
         self.channels = channels
+        self.test = test
         self.path = pd.read_csv(str(path),
                                 engine='python')
         self.path = self.path.iloc[:, self.channels]
-        #self.filtered()
-
-    def filtered(self):
-        '''Not working at this time.'''
-        # TODO: Implement filtering.
-        for i in range(len(self.channels)):
-            filtered = sig.butter(self.path.iloc[:, i], 256, 49, 51)
-            filtered = sig.butter(filtered, 256, 3, 50)
-            self.path.iloc[:, i] = filtered
-        return self.path
 
     def start_streaming(self, callback):
         __temp = []
@@ -41,7 +47,8 @@ class OpenBCISimulator(object):
                 __temp.append(j)
             sample = OpenBCISample(i, __temp)
             __temp = []
-            time.sleep(1./self.sample_rate)
+            if not self.test:
+                time.sleep(1./self.sample_rate)
             callback(sample)
 
 
